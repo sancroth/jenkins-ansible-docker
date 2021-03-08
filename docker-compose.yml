@@ -1,0 +1,37 @@
+version: '3'
+services:
+  jenkins-dind:
+    privileged: true
+    container_name: jenkins-dind
+    image: docker:dind
+    ports:
+      - "2376:2376"
+    volumes:
+      - "$PWD/jenkins-docker-certs:/certs/client"
+      - "$PWD/jenkins-data:/var/jenkins_home"
+    environment:
+      - DOCKER_TLS_CERTDIR=/certs
+    networks:
+      - jenkins-net
+  jenkins-docker:
+    container_name: jenkins-docker
+    image: jenkins-ansible
+    build:
+      context: jenkins-ansible
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - "$PWD/jenkins-docker-certs:/certs/client"
+      - "$PWD/jenkins-data:/var/jenkins_home"
+    environment:
+      - DOCKER_HOST=jenkins-dind:2376
+      - DOCKER_CERT_PATH=/certs/client:ro
+      - DOCKER_TLS_VERIFY=1
+    networks:
+      - jenkins-net
+networks:
+  jenkins-net:
+volumes:
+  jenkins-docker-certs:
+  jenkins-data:
